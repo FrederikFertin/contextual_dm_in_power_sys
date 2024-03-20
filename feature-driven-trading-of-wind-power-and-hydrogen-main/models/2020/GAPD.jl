@@ -200,7 +200,7 @@ for i in 1:12
     data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
     names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
 
-    filename = "2020/pricedomains/general_PRICEDOMAIN_mo$n_months"
+    filename = "2020/pricedomains/general_PRICEDOMAIN_mo$(n_months)_non_reg"
     easy_export(data, names, filename,)
 end
 
