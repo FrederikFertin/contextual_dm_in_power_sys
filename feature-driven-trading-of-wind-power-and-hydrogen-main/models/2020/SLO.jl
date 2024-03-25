@@ -28,11 +28,12 @@ residuals = y_pred_train - y_train
 
 using StatsPlots, Distributions
 
-histogram(residuals, bins=10, label="Residuals")
-display(plot!())
+p = histogram(residuals, bins=100, label="Residuals")
+display(p)
 norm_dist = fit(Normal, residuals)
 
 
-plot(norm_dist, fill=(0, .5, :orange), label="Residuals")
+p = plot(norm_dist, label="Residuals")
+display(p)
 
 #get_SAA_plan(0, y_test, norm_dist, 100)

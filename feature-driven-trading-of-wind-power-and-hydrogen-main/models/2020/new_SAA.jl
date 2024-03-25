@@ -19,7 +19,7 @@ function get_SAA_plan(bidding_start)
     price_DW = reshape(lambda_DW, 24, :) # DW Price [hour, scen]
 
     wind_fore = reshape(all_data[:,"production_FC"],24,:) # Forecasted wind [hour, scen]
-    wind_real  = reshape(all_data[:,"production_RE"],24,:) # Real wind [hour, scen]
+    wind_real  = reshape(all_data[:,"production_RE"],24,:) .* nominal_wind_capacity # Real wind [hour, scen]
 
     pii =1/length(scenarios)
    #Make alternative SAA of where hour is not considered ??, no should be there for hydrogen production 
@@ -64,12 +64,13 @@ function get_SAA_plan(bidding_start)
     @constraint(SAA, elec_capacity[t in periods, s in scenarios], hydrogen[t] <= max_elec_capacity)
   
     #Min production
-    @constraint(SAA,hydro_scen[s in scenarios], sum(hydrogen[t] + EH_DW[t,s] -EH_UP[t,s] for t in periods) >= min_production)
+    @constraint(SAA,hydro_scen[s in scenarios], sum(hydrogen[t] + EH_DW[t,s] - EH_UP[t,s] for t in periods) >= min_production)
     #Based on forecasted production OLD
     #@constraint(SAA, bidding[t in periods], forward_bid[t] + hydrogen[t,s] == max(0, min(deterministic_forecast[t+offset, 1], max_wind_capacity)))
     #Based on stochastic production  NEW 
     #Forecast 
     @constraint(SAA, bidding[t in periods, s in scenarios], forward_bid[t] + hydrogen[t] <=max_wind_capacity)
+    """ Does not need to be here ^^ """
     #Real
    # @constraint(SAA, bidding[t in periods, s in scenarios], forward_bid[t] + hydrogen[t,s] == wind_real[t,s] )
     ####################################----------#####################################################
@@ -86,10 +87,10 @@ function get_SAA_plan(bidding_start)
     @constraint(SAA, elec_capacity_dw[t in periods, s in scenarios], EH_DW[t,s] <= max_elec_capacity)
 
     @constraint(SAA, surplus_settle1[t in periods, s in scenarios], E_DW[t,s] + EH_DW[t,s] >= E_settle[t,s])
-    @constraint(SAA, surplus_settle2[t in periods, s in scenarios], E_DW[t,s] + EH_DW[t,s]  <= E_settle[t,s] + M * b[t,s])
-    @constraint(SAA, surplus_settle3[t in periods, s in scenarios], E_DW[t,s] + EH_DW[t,s]  <= M * (1 - b[t,s]))
+    @constraint(SAA, surplus_settle2[t in periods, s in scenarios], E_DW[t,s] + EH_DW[t,s] <= E_settle[t,s] + M * b[t,s])
+    @constraint(SAA, surplus_settle3[t in periods, s in scenarios], E_DW[t,s] + EH_DW[t,s] <= M * (1 - b[t,s]))
 
-    @constraint(SAA, deficit_settle1[t in periods, s in scenarios], E_UP[t,s] + EH_UP[t,s]  >= -E_settle[t,s])
+    @constraint(SAA, deficit_settle1[t in periods, s in scenarios], E_UP[t,s] + EH_UP[t,s] >= -E_settle[t,s])
     @constraint(SAA, deficit_settle2[t in periods, s in scenarios], E_UP[t,s] + EH_UP[t,s] <= -E_settle[t,s] + M * (1 - b[t,s]))
     @constraint(SAA, deficit_settle3[t in periods, s in scenarios], E_UP[t,s] + EH_UP[t,s] <= M * (b[t,s]))
 

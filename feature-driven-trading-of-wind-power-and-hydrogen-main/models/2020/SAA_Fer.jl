@@ -18,8 +18,8 @@ function get_SAA_plan(bidding_start)
     price_UP = reshape(lambda_UP, 24, :) # UP Price [hour, scen]
     price_DW = reshape(lambda_DW, 24, :) # DW Price [hour, scen]
 
-    wind_fore = reshape(all_data[:,"production_FC"],24,:) # Forecasted wind [hour, scen]
-    wind_real  = reshape(all_data[:,"production_RE"],24,:) # Real wind [hour, scen]
+    wind_fore = reshape(all_data[:,"production_FC"],24,:) .* nominal_wind_capacity # Forecasted wind [hour, scen]
+    wind_real  = reshape(all_data[:,"production_RE"],24,:) .* nominal_wind_capacity # Real wind [hour, scen]
 
     pii =1/length(scenarios)
    #Make alternative SAA of where hour is not considered ??, no should be there for hydrogen production 
