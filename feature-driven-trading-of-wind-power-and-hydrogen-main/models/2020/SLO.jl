@@ -13,6 +13,9 @@ Y = E_real
 
 x_train = Matrix(X[1:8760,:])
 x_test = Matrix(X[8761:8760+test_points,:])
+
+
+
 y_train = Matrix(Y[1:8760,:])
 y_test = Matrix(Y[8761:8760+test_points,:])
 
