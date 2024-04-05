@@ -96,7 +96,7 @@ function get_SAA_plan(weights::Vector{Float64}, bidding_start::Int64, trim_level
 
     wind_real  = reshape(all_data[:,"production_RE"], 24, :) .* nominal_wind_capacity # Real wind [hour, scen]
 
-    quant_cut_off = quantile(weights, trim_level)
+    #quant_cut_off = quantile(weights, trim_level)
     #print("\n\n\nCheck quant_cut_off: $quant_cut_off")
     #print("\nPercentage trimmed: $(sum(weights .< quant_cut_off)/length(weights)*100)\n\n\n")
 
@@ -152,7 +152,7 @@ function get_SAA_plan(weights::Vector{Float64}, bidding_start::Int64, trim_level
             # Power surplus == POSITIVE, deficit == NEGATIVE
             @constraint(SAA, wind_real[t,s] - forward_bid[t] - hydrogen_plan[t] == E_settle[t,s])
             
-            # We are surplus settling:
+            
             @constraint(SAA, E_DW[t,s] + EH_extra[t,s] - E_UP[t,s] == E_settle[t,s])
 
             ## Algorithm 13 equivalent ##
