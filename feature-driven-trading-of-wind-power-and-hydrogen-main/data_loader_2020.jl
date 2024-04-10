@@ -48,6 +48,8 @@ min_production = 50
 deterministic_forecast = all_data[:, ["production_FC"]] .* nominal_wind_capacity
 E_real = all_data[:, "production_RE"] .* nominal_wind_capacity
 
+pred_errors = E_real .- deterministic_forecast
+
 M = max(max_wind_capacity, max_elec_capacity)
 
 periods = collect(1:length(lambda_F))

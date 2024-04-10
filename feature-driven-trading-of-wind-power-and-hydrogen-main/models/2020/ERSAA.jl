@@ -8,32 +8,29 @@ function cf_fit(X, y)
     """ Closed form weighted fit """
     XT = transpose(X)
     return inv(XT * X) * XT * y
-
 end 
+
 function generateERSAAScenarios(outputs::Array{Float64,2},inputs::Array{Float64,2},covariates_obs::Array{Float64,1},coeff_true::Array{Float64,2})
-#Residual no Jack knife
-numDependentVar::Int64 = size(outputs,2)
-numIndependentVar::Int64 = size(inputs,2)
-numSamples::Int64 = size(outputs,1)
-returns_scen_ERSAA = zeros(Float64,numSamples,numDependentVar)
+	#Residual no Jack knife
+	numDependentVar::Int64 		= size(outputs, 2)
+	numIndependentVar::Int64 	= size(inputs, 2)
+	numSamples::Int64 			= size(outputs, 1)
+	returns_scen_ERSAA 			= zeros(Float64, numSamples, numDependentVar)
 
-if(size(outputs,1) != size(inputs,1))
-    throw(ErrorException("Number of output samples != number of input samples"))
+	if(size(outputs,1) != size(inputs,1))
+		throw(ErrorException("Number of output samples != number of input samples"))
+	end
+
+	if(numSamples < numIndependentVar)
+		throw(ErrorException("Expected number of samples > number of covariates in OLS!"))
+	end
+
+	coeff_full = cf_fit(inputs, outputs)
+
+	returns_scen_ERSAA = repeat(((covariates_obs')*coeff_full)', outer=[1, numSamples])' + outputs - inputs*coeff_full
+
+	return returns_scen_ERSAA, coeff_full
 end
-
-
-if(numSamples < numIndependentVar)
-    throw(ErrorException("Expected number of samples > number of covariates in OLS!"))
-end
-
-
-    coeff_full = cf_fit(inputs,outputs)
-
-    returns_scen_ERSAA = repeat(((covariates_obs')*coeff_full)', outer=[1,numSamples])' + outputs - inputs*coeff_full
-
-
-return returns_scen_ERSAA, coeff_full
-end 
 
 
 

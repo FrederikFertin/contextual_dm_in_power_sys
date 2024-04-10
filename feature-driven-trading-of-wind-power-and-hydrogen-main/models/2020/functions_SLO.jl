@@ -7,6 +7,7 @@ using LinearAlgebra
 using NearestNeighbors
 using Plots
 using LinearRegression
+using HiGHS
 
 function get_weights(X, X_u, sigma=0.51)
     """ Get weights for weighted fit """
@@ -88,7 +89,7 @@ function get_SAA_plan(weights::Vector{Float64}, bidding_start::Int64, trim_level
 
     periods = collect(1:24) # Hour of day 
     scens = length(weights)
-    #SAA 
+    #SAA
     scenarios = collect(1:div(scens*24,24)) # This is scenarios per day
     price_scen = reshape(lambda_F, 24, :) # Price [hour, scen]
     price_UP = reshape(lambda_UP, 24, :) # UP Price [hour, scen]
@@ -196,4 +197,91 @@ function export_SAA(all_forward_bids, all_hydrogen_productions, filename)
     df = createDF(typed_dataseries, names)
     export_dataframe(df, filename)
     print("\n\nExported file: $filename\n\n")
+end
+
+function get_ER_SAA_plan(test_scenarios::Matrix{Float64},
+    lambdas::Vector{Float64},
+    price_UP::Vector{Float64},
+    price_DW::Vector{Float64})
+
+    # Generate ER-SAA scenarios
+    scens = size(test_scenarios, 1)
+    scenarios = collect(1:scens) # Number of scenarios/days generated
+    periods = collect(1:size(test_scenarios, 2)) # Hour of day
+
+    # Declare Gurobi model
+    SAA = Model(Gurobi.Optimizer)
+    set_silent(SAA)
+
+    #---------------- Definition of variables -----------------#
+    ### 1st Stage variables ###
+    @variable(SAA, 0 <= hydrogen_plan[t in periods]) # First stage
+    @variable(SAA, forward_bid[t in periods]) # First stage 
+
+    ### 2nd Stage variables ###
+    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
+    
+    #---------------- Objective function -----------------#
+    #Maximize profit
+    @objective(SAA, Max,
+        sum(lambda_H   * hydrogen_plan[t] +
+            lambdas[t] * forward_bid[t]   +
+            sum(( price_DW[t] * E_DW[t,s]
+                - price_UP[t] * E_UP[t,s]
+                + lambda_H    * EH_extra[t,s]
+                ) / scens
+            for s in scenarios)
+            for t in periods)
+    )
+
+    #---------------- Constraints -----------------#
+    # Min daily production of hydrogen
+    @constraint(SAA, sum(hydrogen_plan) >= min_production)
+
+    for t in periods
+        #### First stage ####
+
+        # Cannot buy more than max consumption:
+        @constraint(SAA, forward_bid[t] >= -max_elec_capacity)
+        # Cannot produce more than max capacity:
+        @constraint(SAA, hydrogen_plan[t] <= max_elec_capacity)
+        # Cannot sell and produce more than max wind capacity:
+        @constraint(SAA, forward_bid[t] + hydrogen_plan[t] <= max_wind_capacity)
+
+        for s in scenarios
+            #### Second stage ####
+
+            # Power surplus == POSITIVE, deficit == NEGATIVE
+            @constraint(SAA,
+                        test_scenarios[s, t] - forward_bid[t] - hydrogen_plan[t]
+                        ==
+                        E_DW[t,s] + EH_extra[t,s] - E_UP[t,s])
+
+            ## Algorithm 13 equivalent ##
+            if t == 1
+                # Must not reduce below min production
+                @constraint(SAA, EH_extra[t,s] >=
+                            - (sum(hydrogen_plan) - min_production))
+            else
+                # Must not reduce below min production - can do if we have produced more than min production earlier
+                @constraint(SAA, EH_extra[t,s] >=
+                            - (sum(hydrogen_plan[tt] + EH_extra[tt,s] for tt=1:t-1) +
+                            sum(hydrogen_plan[tt] for tt=t:24) - min_production) )
+            end
+            # Cannot produce more than max capacity:
+            @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] <= max_elec_capacity)
+            # Cannot produce less than 0:
+            @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
+        end
+    end
+
+    optimize!(SAA)
+
+    #print("\n\n\nCheck obj: $(objective_value(SAA))")
+    #print("\n\n\nCheck bidding_start: $(bidding_start)")
+    #print("\n\n\n")
+
+    return value.(forward_bid), value.(hydrogen_plan)
 end
