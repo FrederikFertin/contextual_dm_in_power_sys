@@ -202,12 +202,24 @@ end
 function get_ER_SAA_plan(test_scenarios::Matrix{Float64},
     lambdas::Vector{Float64},
     price_UP::Vector{Float64},
-    price_DW::Vector{Float64})
+    price_DW::Vector{Float64},
+    wind_fc::Vector{Float64})
 
     # Generate ER-SAA scenarios
     scens = size(test_scenarios, 1)
     scenarios = collect(1:scens) # Number of scenarios/days generated
     periods = collect(1:size(test_scenarios, 2)) # Hour of day
+
+    # Compute scenario weights
+    errors = (test_scenarios' .- wind_fc .* nominal_wind_capacity)'
+    weights = exp.(- errors.^2 ./ 10)
+    W = sum(weights)
+    
+    for s in scenarios
+        for t in periods
+            weights[s,t] = weights[s,t] / W * 24
+        end
+    end
 
     # Declare Gurobi model
     SAA = Model(Gurobi.Optimizer)
@@ -231,7 +243,7 @@ function get_ER_SAA_plan(test_scenarios::Matrix{Float64},
             sum(( price_DW[t] * E_DW[t,s]
                 - price_UP[t] * E_UP[t,s]
                 + lambda_H    * EH_extra[t,s]
-                ) / scens
+                ) * 1/scens # weights[s,t] # 1/scens 
             for s in scenarios)
             for t in periods)
     )
