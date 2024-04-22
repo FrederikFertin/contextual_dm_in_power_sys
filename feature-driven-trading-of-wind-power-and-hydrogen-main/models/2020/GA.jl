@@ -46,7 +46,7 @@ function get_initial_plan(training_period_length, bidding_start)
             + lambda_DW[t+offset] * E_DW[t]
             - lambda_UP[t+offset] * E_UP[t]
             for t in periods
-        ) - sum(q_F[i]^2 + q_H[i]^2 for i=1:n_features+1) * lambda_reg
+        ) 
     )
 
 
@@ -73,8 +73,8 @@ function get_initial_plan(training_period_length, bidding_start)
             if (index == 0)
                 index = 24
             end
-            @constraint(initial_plan, forward_bid[t] == sum(qF[i] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1])
-            @constraint(initial_plan, hydrogen[t] == sum(qH[i] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1])
+            @constraint(initial_plan, forward_bid[t] == sum(qF[i] * x[t+offset, i] for i in 1:n_features_rf) + qF[n_features_rf+1])
+            @constraint(initial_plan, hydrogen[t] == sum(qH[i] * x[t+offset, i] for i in 1:n_features_rf) + qH[n_features_rf+1])
         end
     end
 
@@ -217,10 +217,10 @@ print("\n---------------------------RF--------------------------------")
 print("\n---------------------------RF--------------------------------")
 print("\n---------------------------RF--------------------------------")
 print("\n\n")
-x = all_data[:, ["production_FC"]]
+x = all_data[:, ["production_FC","forward_RE"]]
 n_features = size(x)[2]
 # # #---------------------------RF--------------------------------
-for i in 1:12
+for i in 12:12
     n_months = i
     training_period = month * n_months
     validation_period = year
