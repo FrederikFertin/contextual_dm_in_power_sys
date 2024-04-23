@@ -30,8 +30,9 @@ end
 x = all_data[:, ["Offshore DK2", "Offshore DK1", "Onshore DK2", "Onshore DK1", "production_FC", "forward_RE"]]
 x_rf = all_data[:, ["production_FC", "forward_RE"]]
 
-
+#Using reduced features 
 n_features = size(x)[2]
+n_features_rf = size(x_rf)[2]
 
 
 
