@@ -42,6 +42,7 @@ x_test_days = transpose(reshape(transpose(x_test_standardized), 48, :))
 dists = transpose(pairwise(Euclidean(), transpose(x_train_days), transpose(x_test_days), dims=2))
 sqDists = dists.^2
 
+
 y_train = Matrix(Y[1:8760,:])
 y_test = Matrix(Y[8761:8760+test_points,:])
 
@@ -79,36 +80,46 @@ export_SAA(all_forward_bids_year, all_hydrogen_productions_year, filename)
 
 ### ---------- Do weighted SAA iteratively through the test set ------------- ###
 #=
-sigma = 0.5
+sigma = 100
+k = 30
+kernel = "knn"
+for k in [365]
+    for i = axes(sqDists,1)
+        println("Day: $i")
+        local weights = zeros(Float64, size(sqDists,2))
+        
+        if kernel == "knn"
+            dist = dists[i, :]
+            near = sortperm(vec(dist))
+            for j = 1:k
+                weights[near[j]] = 1.0
+            end
+        elseif kernel == "gaussian"
+            for j = axes(sqDists,2)
+                weights[j] = exp.(- sqDists[i,j] / sigma)
+            end
+        end
+        weights = weights / sum(weights)
+        replace!(weights, NaN=>0.0)
 
-for i = axes(sqDists,1)
-    println("Day: $i")
-    local weights = ones(Float64, size(sqDists,2))
-    for j = axes(sqDists,2)
-        weights[j] = exp.(- sqDists[i,j] / sigma)
+        local all_forward_bids, all_hydrogen_productions = get_SAA_plan(weights, bidding_start)
+        
+        if i == 1
+            global data1 = [all_forward_bids[t] for t = 1:length(all_forward_bids)]
+            global data2 = [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)]
+        else
+            data1 = vcat(data1, [all_forward_bids[t] for t = 1:length(all_forward_bids)])
+            data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
+        end
     end
-    weights = weights / sum(weights)
-    replace!(weights, NaN=>0.0)
-    local trim_level = 0.05
 
-    local all_forward_bids, all_hydrogen_productions = get_SAA_plan(weights, bidding_start, trim_level)
-    
-    if i == 1
-        global data1 = [all_forward_bids[t] for t = 1:length(all_forward_bids)]
-        global data2 = [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)]
-    else
-        data1 = vcat(data1, [all_forward_bids[t] for t = 1:length(all_forward_bids)])
-        data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
-    end
+    filename = "SLO/wSAA/wSAA_365_days_kernel_$(kernel)_k_$(k)"
+    export_SAA(data1, data2, filename)
 end
-
-filename = "SLO/wSAA/wSAA_365_days_$(trim_level)_trimmed_testdays_$(n)_sigma_$(sigma)"
-export_SAA(data1, data2, filename)
 =#
-
 ### ----------- Do ER SAA iteratively through the test set ---------------- ###
 
-
+#=
 x_train_days = transpose(reshape(transpose(x_train), 48, :))
 x_test_days = transpose(reshape(transpose(x_test), 48, :))
 y_test_days = transpose(reshape(transpose(y_test), 24, :)) ./ nominal_wind_capacity
@@ -134,7 +145,7 @@ dw_test_days = reshape(lambda_DW[8761:8760+test_points], 24, :)'
 
 #scenarios = 1000 # Number of scenarios to generate for each day; 1 = point prediction, 2 = 2 scenarios, etc.
 
-for scenarios in [2]
+for scenarios in [1 2 3 4 5 10 25 50 100 200 365 500 1000]
     # Define method for generating scenarios by adding errors:
     # 1 = level dependent from dist, 2 = constant from dist, 3 = constant from training errors
     method = "dist_levels"
@@ -205,7 +216,7 @@ for scenarios in [2]
             data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
         end
     end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_$(n)_days"
+    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
     export_SAA(data1, data2, filename)
 
     #method = "dist_levels"
@@ -276,7 +287,7 @@ for scenarios in [2]
             data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
         end
     end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_$(n)_days"
+    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
     export_SAA(data1, data2, filename)
 
     #method = "dist_levels"
@@ -347,6 +358,7 @@ for scenarios in [2]
             data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
         end
     end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_$(n)_days"
+    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
     export_SAA(data1, data2, filename)
 end
+=#

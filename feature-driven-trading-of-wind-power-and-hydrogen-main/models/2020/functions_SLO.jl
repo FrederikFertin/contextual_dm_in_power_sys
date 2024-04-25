@@ -112,7 +112,6 @@ function get_SAA_plan(weights::Vector{Float64}, bidding_start::Int64, trim_level
     @variable(SAA, forward_bid[t in periods]) # First stage 
 
     ### 2nd Stage variables ###
-    @variable(SAA, E_settle[t in periods, s in scenarios])
     @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
     @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
     @variable(SAA, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
@@ -151,10 +150,8 @@ function get_SAA_plan(weights::Vector{Float64}, bidding_start::Int64, trim_level
             #### Second stage ####
 
             # Power surplus == POSITIVE, deficit == NEGATIVE
-            @constraint(SAA, wind_real[t,s] - forward_bid[t] - hydrogen_plan[t] == E_settle[t,s])
-            
-            
-            @constraint(SAA, E_DW[t,s] + EH_extra[t,s] - E_UP[t,s] == E_settle[t,s])
+            @constraint(SAA, wind_real[t,s] - forward_bid[t] - hydrogen_plan[t] == 
+                        E_DW[t,s] + EH_extra[t,s] - E_UP[t,s])
 
             ## Algorithm 13 equivalent ##
             if t == 1
@@ -171,6 +168,9 @@ function get_SAA_plan(weights::Vector{Float64}, bidding_start::Int64, trim_level
             @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] <= max_elec_capacity)
             # Cannot produce less than 0:
             @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
+            if lambda_H < price_DW[t,s]
+                @constraint(SAA, EH_extra[t,s] <= 0)
+            end
         end
     end
 
@@ -286,6 +286,9 @@ function get_ER_SAA_plan(test_scenarios::Matrix{Float64},
             @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] <= max_elec_capacity)
             # Cannot produce less than 0:
             @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
+            if lambda_H < price_DW[t]
+                @constraint(SAA, EH_extra[t,s] <= 0)
+            end
         end
     end
 
