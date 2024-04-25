@@ -41,15 +41,14 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
 
     #---------------- Definition of variables -----------------#
     ### 1st Stage variables ###
-    @variable(SAA, 0 <= hydrogen_plan[t in periods]) # First stage
-    @variable(SAA, forward_bid[t in periods]) # First stage 
+    @variable(SAA, 0 <= hydrogen_plan[t in periods, s in scenarios]) # First stage
+    @variable(SAA, forward_bid[t in periods, s in scenarios]) # First stage 
 
     ### 2nd Stage variables ###
     @variable(SAA, E_settle[t in periods, s in scenarios])
-    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
-    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
-    @variable(SAA, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
-
+    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= max_wind_capacity)
+    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= max_wind_capacity)
+    
     #Linear line fit 
     @variable(SAA, qF[1:(n_features_rf+1)])
     @variable(SAA, qH[1:(n_features_rf+1)])
@@ -58,11 +57,10 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
     #Maximize profit
     @objective(SAA, Max,
         sum(
-            lambda_H * hydrogen_plan[t] +
-            sum((price_scen[t,s] * forward_bid[t]
+            sum((lambda_H * hydrogen_plan[t,s] +
+                price_scen[t,s] * forward_bid[t,s]
                 + price_DW[t,s] * E_DW[t,s]
                 - price_UP[t,s] * E_UP[t,s]
-                + lambda_H * EH_extra[t,s]
                 ) * 1/s
             for s in scenarios
             )
@@ -72,26 +70,28 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
 
     #---------------- Constraints -----------------#
     # Min daily production of hydrogen
-    @constraint(SAA, sum(hydrogen_plan) >= min_production)
 
+    @constraint(SAA,[s in scenarios], sum(hydrogen_plan[t,s] for t in periods) >= min_production)
     for t in periods
+        
+        for s in scenarios
         #### First stage ####
 
         # Cannot buy more than max consumption:
-        @constraint(SAA, forward_bid[t] >= -max_elec_capacity)
+        @constraint(SAA, forward_bid[t,s] >= -max_elec_capacity)
         # Cannot produce more than max capacity:
-        @constraint(SAA, hydrogen_plan[t] <= max_elec_capacity)
+        @constraint(SAA, hydrogen_plan[t,s] <= max_elec_capacity)
         # Cannot sell and produce more than max wind capacity:
-        @constraint(SAA, forward_bid[t] + hydrogen_plan[t] <= max_wind_capacity)
+        @constraint(SAA, forward_bid[t,s] + hydrogen_plan[t,s] <= max_wind_capacity)
 
-        for s in scenarios
+      
             #### Second stage ####
 
             # Power surplus == POSITIVE, deficit == NEGATIVE
-            @constraint(SAA, wind_real[t,s] - forward_bid[t] - hydrogen_plan[t] == E_settle[t,s])
+            @constraint(SAA, wind_real[t,s] - forward_bid[t,s] - hydrogen_plan[t,s] == E_settle[t,s])
             
             
-            @constraint(SAA, E_DW[t,s] + EH_extra[t,s] - E_UP[t,s] == E_settle[t,s])
+            @constraint(SAA, E_DW[t,s] - E_UP[t,s] == E_settle[t,s])
             #=
             ## Algorithm 13 equivalent ##
             if t == 1
@@ -109,10 +109,12 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
             # Cannot produce less than 0:
             @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
         
-        =#
+            =#
+            @constraint(SAA, forward_bid[t,s] == sum(qF[i] * x_train_days[s, t*i] for i in 1:n_features_rf) + qF[n_features_rf+1])
+            @constraint(SAA, hydrogen_plan[t,s] == sum(qH[i] * x_train_days[s, t*i] for i in 1:n_features_rf) + qH[n_features_rf+1])
+
         end
-        @constraint(SAA, forward_bid[t] == sum(qF[i] * x_rf[t, i] for i in 1:n_features_rf) + qF[n_features_rf+1])
-        @constraint(SAA, hydrogen_plan[t] == sum(qH[i] * x_rf[t, i] for i in 1:n_features_rf) + qH[n_features_rf+1])
+      
     end
 
     optimize!(SAA)
@@ -156,7 +158,7 @@ x_test2 = (x_test[:,2] .- mean(x_train[:,2])) ./ std(x_train[:,2])
 x_test_standardized = hcat(x_test1, x_test2)
 
 # Reshape the data to have 48 columns to represent 2*24 hours in a day
-x_train_days = transpose(reshape(transpose(x_train_standardized), 24*size(X,2), :))
+x_train_days = transpose(reshape(transpose(x_train), 24*size(X,2), :))
 x_test_days = transpose(reshape(transpose(x_test_standardized), 24*size(X,2), :))
 
 
