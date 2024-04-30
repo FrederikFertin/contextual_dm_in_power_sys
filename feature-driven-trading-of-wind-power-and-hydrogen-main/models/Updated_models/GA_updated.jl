@@ -48,7 +48,7 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
     @variable(SAA, E_settle[t in periods, s in scenarios])
     @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= max_wind_capacity)
     @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= max_wind_capacity)
-    
+
     #Linear line fit 
     @variable(SAA, qF[1:(n_features_rf+1)])
     @variable(SAA, qH[1:(n_features_rf+1)])
@@ -59,8 +59,8 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
         sum(
             sum((lambda_H * hydrogen_plan[t,s] +
                 price_scen[t,s] * forward_bid[t,s]
-                + price_DW[t,s] * E_DW[t,s]
-                - price_UP[t,s] * E_UP[t,s]
+                + dw_train_days[t,s] * E_DW[t,s]
+                - up_train_days[t,s] * E_UP[t,s]
                 ) * 1/s
             for s in scenarios
             )
@@ -70,7 +70,6 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
 
     #---------------- Constraints -----------------#
     # Min daily production of hydrogen
-
     @constraint(SAA,[s in scenarios], sum(hydrogen_plan[t,s] for t in periods) >= min_production)
     for t in periods
         
@@ -82,7 +81,7 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
         # Cannot produce more than max capacity:
         @constraint(SAA, hydrogen_plan[t,s] <= max_elec_capacity)
         # Cannot sell and produce more than max wind capacity:
-        @constraint(SAA, forward_bid[t,s] + hydrogen_plan[t,s] <= max_wind_capacity)
+        @constraint(SAA, forward_bid[t,s] <= max_wind_capacity)
 
       
             #### Second stage ####
@@ -110,8 +109,8 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
             @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
         
             =#
-            @constraint(SAA, forward_bid[t,s] == sum(qF[i] * x_train_days[s, t*i] for i in 1:n_features_rf) + qF[n_features_rf+1])
-            @constraint(SAA, hydrogen_plan[t,s] == sum(qH[i] * x_train_days[s, t*i] for i in 1:n_features_rf) + qH[n_features_rf+1])
+            @constraint(SAA, forward_bid[t,s] == sum(qF[i] * x_train_days[2*(t-1)+i,s ] for i in 1:n_features_rf) + qF[n_features_rf+1])
+            @constraint(SAA, hydrogen_plan[t,s] == sum(qH[i] * x_train_days[2*(t-1)+i ,s] for i in 1:n_features_rf) + qH[n_features_rf+1])
 
         end
       
@@ -123,7 +122,7 @@ function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
     print("\n\n\nCheck bidding_start: $(bidding_start)")
     print("\n\n\n")
 
-    return value.(qF), value.(qH)
+    return value.(qF), value.(qH) , value.(forward_bid)
 end
 
 
@@ -158,8 +157,8 @@ x_test2 = (x_test[:,2] .- mean(x_train[:,2])) ./ std(x_train[:,2])
 x_test_standardized = hcat(x_test1, x_test2)
 
 # Reshape the data to have 48 columns to represent 2*24 hours in a day
-x_train_days = transpose(reshape(transpose(x_train), 24*size(X,2), :))
-x_test_days = transpose(reshape(transpose(x_test_standardized), 24*size(X,2), :))
+x_train_days = (reshape(transpose(x_train), 24*size(X,2), :))
+x_test_days = (reshape(transpose(x_test_standardized), 24*size(X,2), :))
 
 
 y_train = Matrix(Y[1:8760,:])
@@ -167,16 +166,21 @@ y_test = Matrix(Y[8761:8760+test_points,:])
 
 
 #2nd stage parameters 
+up_train_days = reshape(lambda_UP[1:8760], 24, :)
+dw_train_days = reshape(lambda_DW[1:8760], 24, :)
+
 up_test_days = reshape(lambda_UP[8761:8760+test_points], 24, :)'
 dw_test_days = reshape(lambda_DW[8761:8760+test_points], 24, :)'
 
 
+reshape(lambda_UP, 24, :)
+
 #calculate weights for linear regression
-qFs, qHs  = updated_GA_plan(365,bidding_start)
+qFs, qHs, bids  = updated_GA_plan(365,bidding_start)
 
 
 
-
+new_bids = vcat(bids...)
 
 
 
@@ -189,4 +193,6 @@ data = vcat([qFs[i] for i in 1:(n_features+1)], [qHs[i] for i in 1:(n_features+1
 names = names = vcat(["qF$i" for i in 1:(n_features+1)], ["qH$i" for i in 1:(n_features+1)])
 easy_export(data, names, filename,)
 
-
+emil_bids
+new_bids - emil_bids
+new_bids

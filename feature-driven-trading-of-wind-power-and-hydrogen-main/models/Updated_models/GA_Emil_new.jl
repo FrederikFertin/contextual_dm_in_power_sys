@@ -17,7 +17,9 @@ function get_initial_plan(training_period_length, bidding_start)
     end
 
     offset = bidding_start - training_period_length
+    #print(offset)
     periods = collect(1:training_period_length)
+   # print(periods)
     days = []
     n_days = Int(training_period_length / 24)
     for i in collect(1:n_days)
@@ -83,7 +85,7 @@ function get_initial_plan(training_period_length, bidding_start)
 
     optimize!(initial_plan)
 
-    return value.(qF), value.(qH)
+    return value.(qF), value.(qH), value.(forward_bid)
 end
 
 
@@ -99,12 +101,13 @@ n_features = size(x)[2]
 # # #---------------------------RF--------------------------------
 for i in 12:12
     n_months = i
-    training_period = month * n_months
+    #training_period = month * n_months
+    training_period=8760
     validation_period = year
     test_period = 0
     bidding_start = length(lambda_F) - validation_period - test_period
 
-    qF, qH = get_initial_plan(training_period, bidding_start)
+    qF, qH, emil_bids = get_initial_plan(training_period, bidding_start)
 
     data = vcat([qF[i] for i in 1:(n_features+1)], [qH[i] for i in 1:(n_features+1)])
     names = vcat(["qF$i" for i in 1:(n_features+1)], ["qH$i" for i in 1:(n_features+1)])
@@ -112,3 +115,6 @@ for i in 12:12
     filename = "2020/comparing_architecture/GENERAL_rfnew_mo$n_months"
     easy_export(data, names, filename,)
 end
+qF, qH, emil_bids = get_initial_plan(training_period, bidding_start)
+training_period
+bidding_start
