@@ -126,7 +126,7 @@ function get_forecasted_plan(training_period_length, bidding_start)
         )
     )
 
-
+ 
     #Max capacity
     @constraint(initial_plan, wind_capacity_up[t in periods], forward_bid[t] <= max_wind_capacity)
     @constraint(initial_plan, wind_capacity_dw[t in periods], forward_bid[t] >= -max_elec_capacity)
