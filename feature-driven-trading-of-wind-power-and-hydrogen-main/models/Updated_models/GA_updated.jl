@@ -12,11 +12,11 @@ using StatsBase
 
 include(joinpath(pwd(),"data_loader_2020.jl"))
 include(joinpath(pwd(), "data_export.jl"))
-include(joinpath(pwd(),"models/2020/functions_SLO.jl"))
+include(joinpath(pwd(),"models/SLO/functions_SLO.jl"))
 
 
 
-    
+
 function updated_GA_plan(n_scenarios::Int64, bidding_start::Int64)
    
    
@@ -186,7 +186,7 @@ include(joinpath(pwd(), "data_export.jl"))
 n_features = size(x_rf)[2]
 filename = "2020/GA_updated_nohydro"
 data = vcat([qFs[i] for i in 1:(n_features+1)], [qHs[i] for i in 1:(n_features+1)])
-names = names = vcat(["qF$i" for i in 1:(n_features+1)], ["qH$i" for i in 1:(n_features+1)])
+names = vcat(["qF$i" for i in 1:(n_features+1)], ["qH$i" for i in 1:(n_features+1)])
 easy_export(data, names, filename,)
 
 
