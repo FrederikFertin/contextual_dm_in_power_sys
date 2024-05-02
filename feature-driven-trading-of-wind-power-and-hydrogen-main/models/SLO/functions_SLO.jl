@@ -300,3 +300,208 @@ function get_ER_SAA_plan(test_scenarios::Matrix{Float64},
 
     return value.(forward_bid), value.(hydrogen_plan)
 end
+
+
+function get_ER_SAA_plan_prices(test_scenarios::Matrix{Float64},
+    #or should be real prices?
+    lambdas_fc::Vector{Float64},
+    price_UP::Vector{Float64},
+    price_DW::Vector{Float64},
+    wind_fc::Vector{Float64})
+    #Fc is the real wind 
+    # Generate ER-SAA scenarios
+    scens = size(test_scenarios, 1)
+    scenarios = collect(1:scens) # Number of scenarios/days generated
+    periods = collect(1:size(test_scenarios, 2)) # Hour of day
+
+    # Compute scenario weights
+    #errors = (test_scenarios' .- wind_fc .* nominal_wind_capacity)'
+    errors = (test_scenarios' .-lambdas_fc)
+    weights = exp.(- errors.^2 ./ 10)
+    W = sum(weights)
+    #=
+    for s in scenarios
+        for t in periods
+            weights[t,s] = weights[t,s] / W * 24
+        end
+    end
+    =#
+    # Declare Gurobi model
+    SAA = Model(Gurobi.Optimizer)
+    set_silent(SAA)
+
+    #---------------- Definition of variables -----------------#
+    ### 1st Stage variables ###
+    @variable(SAA, 0 <= hydrogen_plan[t in periods]) # First stage
+    @variable(SAA, forward_bid[t in periods]) # First stage 
+
+    ### 2nd Stage variables ###
+    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
+    
+    #---------------- Objective function -----------------#
+    #Maximize profit
+    @objective(SAA, Max,
+        sum(lambda_H   * hydrogen_plan[t] +
+        sum((test_scenarios[s,t] * forward_bid[t]   +
+             price_DW[t] * E_DW[t,s]
+                - price_UP[t] * E_UP[t,s]
+                + lambda_H    * EH_extra[t,s]
+                ) * 1/scens # weights[s,t] # 1/scens 
+            for s in scenarios)
+            for t in periods)
+    )
+
+    #---------------- Constraints -----------------#
+    # Min daily production of hydrogen
+    @constraint(SAA, sum(hydrogen_plan) >= min_production)
+
+    for t in periods
+        #### First stage ####
+
+        # Cannot buy more than max consumption:
+        @constraint(SAA, forward_bid[t] >= -max_elec_capacity)
+        # Cannot produce more than max capacity:
+        @constraint(SAA, hydrogen_plan[t] <= max_elec_capacity)
+        # Cannot sell and produce more than max wind capacity:
+        @constraint(SAA, forward_bid[t] + hydrogen_plan[t] <= max_wind_capacity)
+
+        for s in scenarios
+            #### Second stage ####
+
+            # Power surplus == POSITIVE, deficit == NEGATIVE
+            @constraint(SAA,
+                    wind_fc[t] - forward_bid[t] - hydrogen_plan[t]
+                        ==
+                        E_DW[t,s] + EH_extra[t,s] - E_UP[t,s])
+
+            ## Algorithm 13 equivalent ##
+            if t == 1
+                # Must not reduce below min production
+                @constraint(SAA, EH_extra[t,s] >=
+                            - (sum(hydrogen_plan) - min_production))
+            else
+                # Must not reduce below min production - can do if we have produced more than min production earlier
+                @constraint(SAA, EH_extra[t,s] >=
+                            - (sum(hydrogen_plan[tt] + EH_extra[tt,s] for tt=1:t-1) +
+                            sum(hydrogen_plan[tt] for tt=t:24) - min_production) )
+            end
+            # Cannot produce more than max capacity:
+            @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] <= max_elec_capacity)
+            # Cannot produce less than 0:
+            @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
+            if lambda_H < price_DW[t]
+                @constraint(SAA, EH_extra[t,s] <= 0)
+            end
+        end
+    end
+
+    optimize!(SAA)
+
+    #print("\n\n\nCheck obj: $(objective_value(SAA))")
+    #print("\n\n\nCheck bidding_start: $(bidding_start)")
+    #print("\n\n\n")
+
+    return value.(forward_bid), value.(hydrogen_plan)
+end
+
+
+function get_SAA_plan_prices(prices_generated,weights::Vector{Float64}, bidding_start::Int64, trim_level::Float64=0.0)
+
+    periods = collect(1:24) # Hour of day 
+    scens = length(weights)
+    #SAA
+    scenarios = collect(1:div(scens*24,24)) # This is scenarios per day
+    price_scen = reshape(lambda_F, 24, :) # Price [hour, scen]
+    price_UP = reshape(lambda_UP, 24, :) # UP Price [hour, scen]
+    price_DW = reshape(lambda_DW, 24, :) # DW Price [hour, scen]
+
+    wind_real  = reshape(all_data[:,"production_RE"], 24, :) .* nominal_wind_capacity # Real wind [hour, scen]
+    price_scen_fc = reshape(lambda_F_fc, 24, :) # Price [hour, scen]
+
+    #quant_cut_off = quantile(weights, trim_level)
+    #print("\n\n\nCheck quant_cut_off: $quant_cut_off")
+    #print("\nPercentage trimmed: $(sum(weights .< quant_cut_off)/length(weights)*100)\n\n\n")
+
+    # Declare Gurobi model
+    SAA = Model(Gurobi.Optimizer)
+    set_silent(SAA)
+    
+
+    #---------------- Definition of variables -----------------#
+    ### 1st Stage variables ###
+    @variable(SAA, 0 <= hydrogen_plan[t in periods]) # First stage
+    @variable(SAA, forward_bid[t in periods]) # First stage 
+
+    ### 2nd Stage variables ###
+    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
+    
+    #---------------- Objective function -----------------#
+    #Maximize profit
+    @objective(SAA, Max,
+        sum(
+            lambda_H * hydrogen_plan[t] +
+            sum((prices_generated[t,s] * forward_bid[t]
+                + price_DW[t,s] * E_DW[t,s]
+                - price_UP[t,s] * E_UP[t,s]
+                + lambda_H * EH_extra[t,s]
+                ) * weights[s]
+            for s in scenarios
+            )
+            for t in periods
+        )
+    )
+
+    #---------------- Constraints -----------------#
+    # Min daily production of hydrogen
+    @constraint(SAA, sum(hydrogen_plan) >= min_production)
+
+    for t in periods
+        #### First stage ####
+
+        # Cannot buy more than max consumption:
+        @constraint(SAA, forward_bid[t] >= -max_elec_capacity)
+        # Cannot produce more than max capacity:
+        @constraint(SAA, hydrogen_plan[t] <= max_elec_capacity)
+        # Cannot sell and produce more than max wind capacity:
+        @constraint(SAA, forward_bid[t] + hydrogen_plan[t] <= max_wind_capacity)
+
+        for s in scenarios
+            #### Second stage ####
+
+            # Power surplus == POSITIVE, deficit == NEGATIVE
+            @constraint(SAA, wind_real[t,s] - forward_bid[t] - hydrogen_plan[t] == 
+                        E_DW[t,s] + EH_extra[t,s] - E_UP[t,s])
+
+            ## Algorithm 13 equivalent ##
+            if t == 1
+                # Must not reduce below min production
+                @constraint(SAA, EH_extra[t,s] >=
+                            - (sum(hydrogen_plan) - min_production))
+            else
+                # Must not reduce below min production - can do if we have produced more than min production earlier
+                @constraint(SAA, EH_extra[t,s] >=
+                            - (sum(hydrogen_plan[tt] + EH_extra[tt,s] for tt=1:t-1) +
+                            sum(hydrogen_plan[tt] for tt=t:24) - min_production) )
+            end
+            # Cannot produce more than max capacity:
+            @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] <= max_elec_capacity)
+            # Cannot produce less than 0:
+            @constraint(SAA, EH_extra[t,s] + hydrogen_plan[t] >= 0)
+            if lambda_H < price_DW[t,s]
+                @constraint(SAA, EH_extra[t,s] <= 0)
+            end
+        end
+    end
+
+    optimize!(SAA)
+
+    #print("\n\n\nCheck obj: $(objective_value(SAA))")
+    #print("\n\n\nCheck bidding_start: $(bidding_start)")
+    #print("\n\n\n")
+
+    return value.(forward_bid), value.(hydrogen_plan)
+end

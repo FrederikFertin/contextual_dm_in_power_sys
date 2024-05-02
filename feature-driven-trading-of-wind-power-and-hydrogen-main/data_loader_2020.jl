@@ -28,6 +28,8 @@ end
 
 
 x = all_data[:, ["Offshore DK2", "Offshore DK1", "Onshore DK2", "Onshore DK1", "production_FC", "forward_RE"]]
+#Forward prices prediction included here
+x_new = all_data[:, ["Offshore DK2", "Offshore DK1", "Onshore DK2", "Onshore DK1", "production_FC","forward_FC"]]
 x_rf = all_data[:, ["production_FC", "forward_RE"]]
 
 #Using reduced features 
@@ -49,7 +51,10 @@ min_production = 50
 deterministic_forecast = all_data[:, ["production_FC"]] .* nominal_wind_capacity
 E_real = all_data[:, "production_RE"] .* nominal_wind_capacity
 
+
+
 pred_errors = E_real .- deterministic_forecast
+pred_errors_forward_siemens = all_data[:, "forward_RE"] .- all_data[:, "forward_FC"]
 
 M = max(max_wind_capacity, max_elec_capacity)
 
