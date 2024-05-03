@@ -30,7 +30,7 @@ end
 x = all_data[:, ["Offshore DK2", "Offshore DK1", "Onshore DK2", "Onshore DK1", "production_FC", "forward_RE"]]
 x_rf = all_data[:, ["production_FC", "forward_RE"]]
 
-#Using reduced features 
+# Using reduced features
 n_features = size(x)[2]
 n_features_rf = size(x_rf)[2]
 
@@ -54,7 +54,6 @@ pred_errors = E_real .- deterministic_forecast
 M = max(max_wind_capacity, max_elec_capacity)
 
 periods = collect(1:length(lambda_F))
-
 
 # --------------Create features
 q_forecast_calculated = [12.195654545757634, 0.5299454470522954, 1.2367673427003123, -0.5444726493505923, 4.9381332869069965]
