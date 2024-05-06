@@ -5,6 +5,7 @@ using DataFrames
 using CSV
 
 include(joinpath(pwd(), "data_loader_2020.jl"))
+include(joinpath(pwd(), "data_export.jl"))
 top_domain = 53.32 # 90% quantile
 
 
@@ -89,7 +90,7 @@ function get_initial_plan(training_period_length, bidding_start)
 
     optimize!(initial_plan)
 
-    return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3]
+    return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], value.(E_DW), value.(E_UP)
 end
 
 function get_forecasted_plan(training_period_length, bidding_start)
@@ -131,7 +132,7 @@ function get_forecasted_plan(training_period_length, bidding_start)
             + lambda_DW[t+offset] * E_DW[t]
             - lambda_UP[t+offset] * E_UP[t]
             for t in periods
-        )
+        ) #- sum(qF[i,t,d]^2 + qH[i,t,d]^2 for i=1:n_features+1, t=1:24, d=1:3) * 1
     )
 
 
@@ -173,10 +174,8 @@ function get_forecasted_plan(training_period_length, bidding_start)
 
     optimize!(initial_plan)
 
-    return [[value.(qF[i, :, d]) for i in 1:3] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:3] for d in 1:3]
+    return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3]
 end
-
-include(joinpath(pwd(), "data_export.jl"))
 
 print("\n\n")
 print("\n---------------------------AF------------------------------")
@@ -184,23 +183,21 @@ print("\n---------------------------AF------------------------------")
 print("\n---------------------------AF------------------------------")
 print("\n\n")
 # ---------------------------AF------------------------------
-for i in 1:12
-    n_months = i
-    training_period = month * n_months
-    validation_period = year
-    test_period = 0
-    bidding_start = length(lambda_F) - validation_period - test_period
+x[:,"Forward_RE"] = lambda_F_fc
+n_months = 12
+training_period = year
+validation_period = year
+test_period = 0
+bidding_start = length(lambda_F) - validation_period - test_period
 
-    qFs, qHs = get_initial_plan(training_period, bidding_start)
+qFs, qHs, e_dw_mip, e_up_mip = get_initial_plan(training_period, bidding_start)
 
-    # # #---------------------------EXPORT RESULTS--------------------------------
-    data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
-    names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
+# # #---------------------------EXPORT RESULTS--------------------------------
+data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
+names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
 
-    filename = "2020/pricedomains/hourly_PRICEDOMAIN_mo$n_months"
-    easy_export(data, names, filename,)
-
-end
+filename = "2020/pricedomains/hourly_PRICEDOMAIN_mo$n_months"
+easy_export(data, names, filename,)
 
 
 # print("\n\n")

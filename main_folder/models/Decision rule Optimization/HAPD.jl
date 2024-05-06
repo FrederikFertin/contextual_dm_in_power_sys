@@ -32,6 +32,8 @@ function get_initial_plan(training_period_length, bidding_start)
     #Definition of variables
     @variable(initial_plan, 0 <= E_DW[t in periods])
     @variable(initial_plan, 0 <= E_UP[t in periods])
+    #@variable(initial_plan, b[t in periods], Bin) # Binary variable indicating if we are deficit_settle (1) or surplus_settle (0)
+    #@variable(initial_plan, E_settle[t in periods])
     @variable(initial_plan, qF[1:(n_features+1), 1:24, 1:3])
     @variable(initial_plan, qH[1:(n_features+1), 1:24, 1:3])
 
@@ -58,6 +60,8 @@ function get_initial_plan(training_period_length, bidding_start)
     # Power surplus == POSITIVE, deficit == NEGATIVE
     @constraint(initial_plan, settlement[t in periods], E_real[t+offset] - forward_bid[t] - hydrogen[t] == E_DW[t] - E_UP[t])
 
+    
+
     for day in days
         @constraint(initial_plan, sum(hydrogen[t] for t in day) >= min_production)
         for t in day
@@ -80,15 +84,15 @@ function get_initial_plan(training_period_length, bidding_start)
 
     optimize!(initial_plan)
 
-    return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3]
+    return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], value.(E_DW), value.(E_UP)
 end
 
 print("\n\n")
-print("\n---------------------------RF--------------------------------")
-print("\n---------------------------RF--------------------------------")
-print("\n---------------------------RF--------------------------------")
+print("\n---------------------------AF--------------------------------")
+print("\n---------------------------AF--------------------------------")
+print("\n---------------------------AF--------------------------------")
 print("\n\n")
-n_features = size(x)[2]
+#n_features = size(x)[2]
 print("Number of features: $(n_features) - all features")
 # # #---------------------------AF--------------------------------
 training_period = year
@@ -96,12 +100,14 @@ validation_period = year
 test_period = 0
 bidding_start = length(lambda_F) - validation_period - test_period
 
-qFs, qHs = get_initial_plan(training_period, bidding_start)
+x[:,"forward_RE"] = lambda_F_fc
+
+qFs, qHs, e_dw_lin, e_up_lin = get_initial_plan(training_period, bidding_start)
 
 data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
 names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
 
-filename = "2020/pricedomains/hourly_af_PRICEDOMAIN_full_year"
+filename = "2020/pricedomains/hourly_af_PRICEDOMAIN_full_year_lin"
 easy_export(data, names, filename,)
 
 
