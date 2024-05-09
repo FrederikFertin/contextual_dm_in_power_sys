@@ -183,10 +183,10 @@ print("\n---------------------------AF------------------------------")
 print("\n---------------------------AF------------------------------")
 print("\n\n")
 # ---------------------------AF------------------------------
-x[:,"Forward_RE"] = lambda_F_fc
+x[:,"Forward_RE"] = lambda_F
 n_months = 12
-training_period = year
-validation_period = year
+training_period = 12*month
+validation_period = month
 test_period = 0
 bidding_start = length(lambda_F) - validation_period - test_period
 
@@ -196,7 +196,7 @@ qFs, qHs, e_dw_mip, e_up_mip = get_initial_plan(training_period, bidding_start)
 data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
 names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
 
-filename = "2020/pricedomains/hourly_PRICEDOMAIN_mo$n_months"
+filename = "2020/pricedomains/hourly_PRICEDOMAIN_mo$(n_months)_testtrain"
 easy_export(data, names, filename,)
 
 

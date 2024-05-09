@@ -48,7 +48,7 @@ function get_initial_plan(training_period_length, bidding_start)
             + lambda_DW[t+offset] * E_DW[t]
             - lambda_UP[t+offset] * E_UP[t]
             for t in periods
-        )
+        ) 
     )
 
 
@@ -95,12 +95,12 @@ print("\n\n")
 #n_features = size(x)[2]
 print("Number of features: $(n_features) - all features")
 # # #---------------------------AF--------------------------------
-training_period = year
-validation_period = year
+training_period = 12*month
+validation_period = 0
 test_period = 0
 bidding_start = length(lambda_F) - validation_period - test_period
 
-x[:,"forward_RE"] = lambda_F_fc
+x[:,"forward_RE"] = lambda_F
 
 qFs, qHs, e_dw_lin, e_up_lin = get_initial_plan(training_period, bidding_start)
 
