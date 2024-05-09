@@ -11,9 +11,10 @@ test_points = 24*n
 all_data
 X = x_new
 Y = lambda_F
-
+test_points
 x_train = Matrix(X[1:8760,:])
 y_train = Matrix(Y[1:8760,:])
+x_test = Matrix(X[8761:8760+test_points,:])
 y_test = Matrix(Y[8761:8760+test_points,:])
 
 function rmse(predictions, targets)
@@ -37,9 +38,9 @@ residuals_price = y_pred_train - y_train
 pred_errors_forward_homebrew = all_data[1:8760,"forward_RE"]-y_pred_train
 using StatsPlots, Distributions
 
-p = histogram(residuals, bins=100, label="Residuals")
+p = histogram(residuals_price, bins=100, label="Residuals")
 display(p)
-norm_dist = fit(Normal, residuals)
+norm_dist = fit(Normal, residuals_price)
 
 
 p = plot(norm_dist, label="Residuals")
@@ -138,6 +139,17 @@ for k in [365]
     filename = "SLO/wSAA/wSAA_365_days_prices_kernel_$(kernel)_k_$(k)"
     export_SAA(data1, data2, filename)
 
+end
+
+
+print("\n\nCheck first 24 forward bids:")
+for i in 1:24
+    print("\n$(all_forward_bids[i])")
+end
+
+print("\n\nCheck first 24 hydrogen prods:")
+for i in 1:24
+    print("\n$(all_hydrogen_productions[i])")
 end
 ###################### ERSAA ############################
 
@@ -318,7 +330,7 @@ for scenarios in [1 2 3 4 5 10 25 50 100 200 365 500 1000]
             data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
         end
     end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
+    filename = "SLO/erSAA/erSAA_prices_$(scenarios)_scenarios_$(method)_method_real_model"
     export_SAA(data1, data2, filename)
 
     #method = "dist_levels"
@@ -393,6 +405,6 @@ for scenarios in [1 2 3 4 5 10 25 50 100 200 365 500 1000]
             data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
         end
     end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
+    filename = "SLO/erSAA/erSAA_prices_$(scenarios)_scenarios_$(method)_method_real_model"
     export_SAA(data1, data2, filename)
 end
