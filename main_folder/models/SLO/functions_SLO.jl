@@ -344,11 +344,10 @@ function get_ER_SAA_plan_prices(test_scenarios::Matrix{Float64},
     #Maximize profit
     @objective(SAA, Max,
         sum(lambda_H   * hydrogen_plan[t] +
-        sum((test_scenarios[s,t] * forward_bid[t]   +
-             price_DW[t] * E_DW[t,s]
-                - price_UP[t] * E_UP[t,s]
-                + lambda_H    * EH_extra[t,s]
-                ) * 1/scens # weights[s,t] # 1/scens 
+        sum((test_scenarios[s,t] * forward_bid[t]
+                + price_DW[t] * test_scenarios[s,t] * 0.9
+                - price_UP[t] * test_scenarios[s,t] * 1.1
+                + lambda_H    * EH_extra[t,s]) * 1/scens # weights[s,t] # 1/scens 
             for s in scenarios)
             for t in periods)
     )

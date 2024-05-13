@@ -25,6 +25,7 @@ function get_opt_z(X, Y, W, N, F)
 
     #Declare Gurobi model
     initial_plan = Model(Gurobi.Optimizer)
+    set_silent(initial_plan)
 
     #Definition of variables
     @variable(initial_plan, 0 <= E_DW[t in periods])
@@ -180,7 +181,7 @@ function gaussian_fit_predict(X_train, y_train, X_test)
             dist = dists[:, ii]
             w += exp.(-dist/3)
         end
-        w = w/24        
+        w = w/24
 
         q = get_opt_z(X_train, y_train, w, N, F)
         
@@ -233,7 +234,7 @@ names = [
     "forward bid",
     "hydrogen production"
 ]
-filename = "kernels/bids_$k KNN year HAPD"
+filename = "Final_results/1st framework DRO/bids_$k KNN year HA"
 typed_dataseries = [[data[1][t] for t = 1:length(data[1])], [data[2][t] for t = 1:length(data[1])]]
 df = createDF(typed_dataseries, names)
 export_dataframe(df, filename)
@@ -247,7 +248,7 @@ names = [
     "forward bid",
     "hydrogen production"
 ]
-filename = "kernels/bids_gaussian year HAPD"
+filename = "Final_results/1st framework DRO/bids_gaussian year HA"
 typed_dataseries = [[data[1][t] for t = 1:length(data[1])], [data[2][t] for t = 1:length(data[1])]]
 df = createDF(typed_dataseries, names)
 export_dataframe(df, filename)

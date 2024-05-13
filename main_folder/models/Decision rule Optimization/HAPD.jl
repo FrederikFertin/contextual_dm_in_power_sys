@@ -32,8 +32,6 @@ function get_initial_plan(training_period_length, bidding_start)
     #Definition of variables
     @variable(initial_plan, 0 <= E_DW[t in periods])
     @variable(initial_plan, 0 <= E_UP[t in periods])
-    #@variable(initial_plan, b[t in periods], Bin) # Binary variable indicating if we are deficit_settle (1) or surplus_settle (0)
-    #@variable(initial_plan, E_settle[t in periods])
     @variable(initial_plan, qF[1:(n_features+1), 1:24, 1:3])
     @variable(initial_plan, qH[1:(n_features+1), 1:24, 1:3])
 
@@ -95,7 +93,7 @@ print("\n\n")
 #n_features = size(x)[2]
 print("Number of features: $(n_features) - all features")
 # # #---------------------------AF--------------------------------
-training_period = 12*month
+training_period = year
 validation_period = 0
 test_period = 0
 bidding_start = length(lambda_F) - validation_period - test_period
