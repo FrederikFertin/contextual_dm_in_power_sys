@@ -26,12 +26,12 @@ function get_initial_plan(days::Int64)
     ### 1st Stage variables ###
     @variable(initial_plan, 0 <= hydrogen_plan[t in periods, s in scenarios]) # First stage
     @variable(initial_plan, forward_bid[t in periods, s in scenarios]) # First stage 
-    @variable(initial_plan, qF[1:3])
-    @variable(initial_plan, qH[1:3])
+    @variable(initial_plan, qF[1:(n_features+1)])
+    @variable(initial_plan, qH[1:(n_features+1)])
 
     ### 2nd Stage variables ###
-    @variable(initial_plan, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
-    @variable(initial_plan, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(initial_plan, 0 <= E_DW[t in periods, s in scenarios] <= 10*max_wind_capacity)
+    @variable(initial_plan, 0 <= E_UP[t in periods, s in scenarios] <= 10*max_wind_capacity)
     @variable(initial_plan, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
     
     #---------------- Objective function -----------------#
@@ -48,11 +48,10 @@ function get_initial_plan(days::Int64)
     )
 
     #---------------- Constraints -----------------#
-    # Min daily production of hydrogen
-    @constraint(initial_plan, sum(hydrogen_plan) >= min_production)
-
-    for t in periods
-        for s in scenarios
+    for s in scenarios
+        # Min daily production of hydrogen
+        @constraint(initial_plan, sum(hydrogen_plan[t,s] for t in periods) >= min_production)
+        for t in periods
             #### First stage ####
             
             # Cannot sell and produce more than max wind capacity:
@@ -71,7 +70,7 @@ function get_initial_plan(days::Int64)
             if t == 1
                 # Must not reduce below min production
                 @constraint(initial_plan, EH_extra[t,s] >=
-                            - (sum(hydrogen_plan) - min_production))
+                            - (sum(hydrogen_plan[tt,s] for tt in periods) - min_production))
             else
                 # Must not reduce below min production - can do if we have produced more than min production earlier
                 @constraint(initial_plan, EH_extra[t,s] >=
@@ -102,8 +101,8 @@ n = 365
 test_points = 24*n
 
 train_errors = pred_errors[:,"production_FC"][1:8760] ./ nominal_wind_capacity
-
-X = x_rf
+x[:,"forward_RE"] = lambda_F
+X = x
 Y = E_real
 
 x_train = Matrix(X[1:8760,:])
@@ -136,14 +135,13 @@ validation_period = year
 all_forward_bids = []
 all_hydrogen_productions = []
 n_months = 12
-training_period = month * n_months
+training_period = year
 test_period = 0
 bidding_start = length(lambda_F) - validation_period - test_period
 
 qF, qH = get_initial_plan(n)
-n_features = 2
 data = vcat([qF[i] for i in 1:(n_features+1)], [qH[i] for i in 1:(n_features+1)])
 names = vcat(["qF$i" for i in 1:(n_features+1)], ["qH$i" for i in 1:(n_features+1)])
 
-filename = "2020/Decisio rules Optimization/revised_GA.csv"
+filename = "Final_results/1st framework DRO/revised_GA"
 easy_export(data, names, filename,)

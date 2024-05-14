@@ -148,216 +148,74 @@ dw_test_days = reshape(lambda_DW[8761:8760+test_points], 24, :)'
 for scenarios in [1 2 3 4 5 10 25 50 100 200 365 500 1000]
     # Define method for generating scenarios by adding errors:
     # 1 = level dependent from dist, 2 = constant from dist, 3 = constant from training errors
-    method = "dist_levels"
-    #method = "dist"
-    #method = "train_errors"
-    if scenarios == 1
-        method = "point"
-    end
-
-    for i = 1:n
-        Random.seed!(i*2)
-        println("Day: $i")
-
-        # Extract data for day i
-        local test_day_wind = x_test_days[i,1:2:48]   # Point prediction of wind production
-        local test_day_lambda = x_test_days[i,2:2:48] # Point prediction of forward price
-        local test_day_up = up_test_days[i,:]
-        local test_day_dw = dw_test_days[i,:]
-
-        # Generate scenarios for wind production
+    methods = ["train_errors", "dist", "dist_levels"]
+    
+    for method in methods
         if scenarios == 1
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[j] = test_day_wind[j]
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "dist_levels"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                local wind_level = test_day_wind[j]
-                if wind_level > 0.75
-                    sample_predictions[:,j] = wind_level .+ rand(error_high_dist, scenarios)
-                elseif wind_level <= 0.25
-                    sample_predictions[:,j]= wind_level .+ rand(error_low_dist, scenarios)
-                else
-                    sample_predictions[:,j] = wind_level .+ rand(error_mid_dist, scenarios)
+            method = "point"
+        end
+        for i = 1:n
+            Random.seed!(i*2)
+            println("Day: $i")
+
+            # Extract data for day i
+            local test_day_wind = x_test_days[i,1:2:48]   # Point prediction of wind production
+            local test_day_lambda = x_test_days[i,2:2:48] # Point prediction of forward price
+            local test_day_up = up_test_days[i,:]
+            local test_day_dw = dw_test_days[i,:]
+
+            # Generate scenarios for wind production
+            if scenarios == 1
+                local sample_predictions = zeros(scenarios, 24)
+                for j in 1:24
+                    sample_predictions[j] = test_day_wind[j]
                 end
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "dist"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[:,j] = test_day_wind[j] .+ rand(error_dist, scenarios)
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "train_errors"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[:,j] = test_day_wind[j] .+ rand(train_errors, scenarios)
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        else
-            error("Method not recognized")
-        end
-
-        local all_forward_bids, all_hydrogen_productions = get_ER_SAA_plan(generated_scenarios,
-                                                                            test_day_lambda,
-                                                                            test_day_up,
-                                                                            test_day_dw,
-                                                                            test_day_wind)
-        
-        # Save results from day i
-        if i == 1
-            global data1 = [all_forward_bids[t] for t = 1:length(all_forward_bids)]
-            global data2 = [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)]
-        else
-            data1 = vcat(data1, [all_forward_bids[t] for t = 1:length(all_forward_bids)])
-            data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
-        end
-    end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
-    export_SAA(data1, data2, filename)
-
-    #method = "dist_levels"
-    method = "dist"
-    #method = "train_errors"
-    if scenarios == 1
-        method = "point"
-    end
-
-    for i = 1:n
-        Random.seed!(i)
-        println("Day: $i")
-
-        # Extract data for day i
-        local test_day_wind = x_test_days[i,1:2:48]   # Point prediction of wind production
-        local test_day_lambda = x_test_days[i,2:2:48] # Point prediction of forward price
-        local test_day_up = up_test_days[i,:]
-        local test_day_dw = dw_test_days[i,:]
-
-        # Generate scenarios for wind production
-        if scenarios == 1
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[j] = test_day_wind[j]
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "dist_levels"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                local wind_level = test_day_wind[j]
-                if wind_level > 0.75
-                    sample_predictions[:,j] = wind_level .+ rand(error_high_dist, scenarios)
-                elseif wind_level <= 0.25
-                    sample_predictions[:,j]= wind_level .+ rand(error_low_dist, scenarios)
-                else
-                    sample_predictions[:,j] = wind_level .+ rand(error_mid_dist, scenarios)
+                local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
+            elseif method == "dist_levels"
+                local sample_predictions = zeros(scenarios, 24)
+                for j in 1:24
+                    local wind_level = test_day_wind[j]
+                    if wind_level > 0.75
+                        sample_predictions[:,j] = wind_level .+ rand(error_high_dist, scenarios)
+                    elseif wind_level <= 0.25
+                        sample_predictions[:,j]= wind_level .+ rand(error_low_dist, scenarios)
+                    else
+                        sample_predictions[:,j] = wind_level .+ rand(error_mid_dist, scenarios)
+                    end
                 end
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "dist"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[:,j] = test_day_wind[j] .+ rand(error_dist, scenarios)
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "train_errors"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[:,j] = test_day_wind[j] .+ rand(train_errors, scenarios)
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        else
-            error("Method not recognized")
-        end
-
-        local all_forward_bids, all_hydrogen_productions = get_ER_SAA_plan(generated_scenarios,
-                                                                            test_day_lambda,
-                                                                            test_day_up,
-                                                                            test_day_dw,
-                                                                            test_day_wind)
-        
-        # Save results from day i
-        if i == 1
-            global data1 = [all_forward_bids[t] for t = 1:length(all_forward_bids)]
-            global data2 = [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)]
-        else
-            data1 = vcat(data1, [all_forward_bids[t] for t = 1:length(all_forward_bids)])
-            data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
-        end
-    end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
-    export_SAA(data1, data2, filename)
-
-    #method = "dist_levels"
-    #method = "dist"
-    method = "train_errors"
-    if scenarios == 1
-        method = "point"
-    end
-
-    for i = 1:n
-        Random.seed!(i)
-        println("Day: $i")
-
-        # Extract data for day i
-        local test_day_wind = x_test_days[i,1:2:48]   # Point prediction of wind production
-        local test_day_lambda = x_test_days[i,2:2:48] # Point prediction of forward price
-        local test_day_up = up_test_days[i,:]
-        local test_day_dw = dw_test_days[i,:]
-
-        # Generate scenarios for wind production
-        if scenarios == 1
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[j] = test_day_wind[j]
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "dist_levels"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                local wind_level = test_day_wind[j]
-                if wind_level > 0.75
-                    sample_predictions[:,j] = wind_level .+ rand(error_high_dist, scenarios)
-                elseif wind_level <= 0.25
-                    sample_predictions[:,j]= wind_level .+ rand(error_low_dist, scenarios)
-                else
-                    sample_predictions[:,j] = wind_level .+ rand(error_mid_dist, scenarios)
+                local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
+            elseif method == "dist"
+                local sample_predictions = zeros(scenarios, 24)
+                for j in 1:24
+                    sample_predictions[:,j] = test_day_wind[j] .+ rand(error_dist, scenarios)
                 end
+                local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
+            elseif method == "train_errors"
+                local sample_predictions = zeros(scenarios, 24)
+                for j in 1:24
+                    sample_predictions[:,j] = test_day_wind[j] .+ rand(train_errors, scenarios)
+                end
+                local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
+            else
+                error("Method not recognized")
             end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "dist"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[:,j] = test_day_wind[j] .+ rand(error_dist, scenarios)
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        elseif method == "train_errors"
-            local sample_predictions = zeros(scenarios, 24)
-            for j in 1:24
-                sample_predictions[:,j] = test_day_wind[j] .+ rand(train_errors, scenarios)
-            end
-            local generated_scenarios = clamp!(sample_predictions, 0, 1)  .* nominal_wind_capacity      # Generate scenarios for wind production
-        else
-            error("Method not recognized")
-        end
 
-        local all_forward_bids, all_hydrogen_productions = get_ER_SAA_plan(generated_scenarios,
-                                                                            test_day_lambda,
-                                                                            test_day_up,
-                                                                            test_day_dw,
-                                                                            test_day_wind)
-        
-        # Save results from day i
-        if i == 1
-            global data1 = [all_forward_bids[t] for t = 1:length(all_forward_bids)]
-            global data2 = [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)]
-        else
-            data1 = vcat(data1, [all_forward_bids[t] for t = 1:length(all_forward_bids)])
-            data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
+            local all_forward_bids, all_hydrogen_productions = get_ER_SAA_plan(generated_scenarios,
+                                                                                test_day_lambda,
+                                                                                test_day_up,
+                                                                                test_day_dw,
+                                                                                test_day_wind)
+            
+            # Save results from day i
+            if i == 1
+                global data1 = [all_forward_bids[t] for t = 1:length(all_forward_bids)]
+                global data2 = [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)]
+            else
+                data1 = vcat(data1, [all_forward_bids[t] for t = 1:length(all_forward_bids)])
+                data2 = vcat(data2, [all_hydrogen_productions[t] for t = 1:length(all_hydrogen_productions)])
+            end
         end
+        filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
+        export_SAA(data1, data2, filename)
     end
-    filename = "SLO/erSAA/erSAA_$(scenarios)_scenarios_$(method)_method_real_model"
-    export_SAA(data1, data2, filename)
 end
