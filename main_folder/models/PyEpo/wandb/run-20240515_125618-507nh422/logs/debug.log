@@ -1,0 +1,42 @@
+2024-05-15 12:56:18,380 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-15 12:56:18,380 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Configure stats pid to 10204
+2024-05-15 12:56:18,380 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Loading settings from C:\Users\ande7\.config\wandb\settings
+2024-05-15 12:56:18,381 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Loading settings from c:\Users\ande7\Documents\Semester 3\Special\Course Material\contextual_dm_in_power_sys\main_folder\models\PyEpo\wandb\settings
+2024-05-15 12:56:18,381 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'entity': 'Pyepo_special', 'project': 'Sweep Pyepo Basic Model', 'root_dir': 'c:\\Users\\ande7\\Documents\\Semester 3\\Special\\Course Material\\contextual_dm_in_power_sys\\main_folder\\models\\PyEpo', 'run_id': '507nh422', 'sweep_param_path': 'c:\\Users\\ande7\\Documents\\Semester 3\\Special\\Course Material\\contextual_dm_in_power_sys\\main_folder\\models\\PyEpo\\wandb\\sweep-21l2bgkz\\config-507nh422.yaml', 'sweep_id': '21l2bgkz'}
+2024-05-15 12:56:18,392 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-15 12:56:18,392 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-15 12:56:18,392 INFO    Thread-68 (_run_job):10204 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-15 12:56:18,393 INFO    Thread-68 (_run_job):10204 [wandb_init.py:_log_setup():520] Logging user logs to c:\Users\ande7\Documents\Semester 3\Special\Course Material\contextual_dm_in_power_sys\main_folder\models\PyEpo\wandb\run-20240515_125618-507nh422\logs\debug.log
+2024-05-15 12:56:18,393 INFO    Thread-68 (_run_job):10204 [wandb_init.py:_log_setup():521] Logging internal logs to c:\Users\ande7\Documents\Semester 3\Special\Course Material\contextual_dm_in_power_sys\main_folder\models\PyEpo\wandb\run-20240515_125618-507nh422\logs\debug-internal.log
+2024-05-15 12:56:18,393 INFO    Thread-68 (_run_job):10204 [wandb_init.py:_jupyter_setup():466] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x0000020E40317FD0>
+2024-05-15 12:56:18,393 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():560] calling init triggers
+2024-05-15 12:56:18,394 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():567] wandb.init called with sweep_config: {'dropout': 0.2, 'gamma': 0.99, 'lr': 0.0001, 'method_name': 'spo+', 'neurons': 128, 'num_epochs': 20}
+config: {}
+2024-05-15 12:56:18,394 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():610] starting backend
+2024-05-15 12:56:18,394 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():614] setting up manager
+2024-05-15 12:56:18,410 INFO    Thread-68 (_run_job):10204 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=spawn, using: spawn
+2024-05-15 12:56:18,412 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():622] backend started and connected
+2024-05-15 12:56:18,446 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_config_callback():1376] config_cb None None {'dropout': 0.2, 'gamma': 0.99, 'lr': 0.0001, 'method_name': 'spo+', 'neurons': 128, 'num_epochs': 20}
+2024-05-15 12:56:18,448 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-15 12:56:18,448 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-15 12:56:18,448 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():711] updated telemetry
+2024-05-15 12:56:18,499 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-15 12:56:19,073 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-15 12:56:19,422 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_on_init():2405] got version response 
+2024-05-15 12:56:19,423 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():795] starting run threads in backend
+2024-05-15 12:56:20,255 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-15 12:56:20,256 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-15 12:56:20,257 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-15 12:56:20,257 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-15 12:56:20,261 INFO    Thread-68 (_run_job):10204 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-15 12:56:25,236 INFO    Thread-68 (_run_job):10204 [wandb_watch.py:watch():51] Watching
+2024-05-15 12:59:31,723 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_finish():2103] finishing run Pyepo_special/Sweep Pyepo Basic Model/507nh422
+2024-05-15 12:59:31,724 ERROR   Thread-68 (_run_job):10204 [jupyter.py:save_history():437] Run pip install nbformat to save notebook history
+2024-05-15 12:59:31,724 INFO    Thread-68 (_run_job):10204 [jupyter.py:save_ipynb():373] not saving jupyter notebook
+2024-05-15 12:59:31,724 INFO    Thread-68 (_run_job):10204 [wandb_init.py:_jupyter_teardown():448] cleaning up jupyter logic
+2024-05-15 12:59:31,725 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-15 12:59:31,725 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_restore():2326] restore
+2024-05-15 12:59:31,725 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_restore():2332] restore done
+2024-05-15 12:59:38,789 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-15 12:59:38,790 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-15 12:59:38,801 INFO    Thread-68 (_run_job):10204 [wandb_run.py:_footer_sync_info():3953] logging synced files
