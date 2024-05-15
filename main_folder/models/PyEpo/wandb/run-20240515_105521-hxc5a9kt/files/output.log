@@ -1,0 +1,6 @@
+100%|██████████| 50/50 [00:00<00:00, 64.56it/s]
+  0%|          | 0/50 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "C:\Users\Frede\AppData\Local\Temp\ipykernel_13384\1638157894.py", line 53, in trainModel
+    param.grad = (param.grad.T * reg.mask).T.type(torch.FloatTensor)
+ValueError: operands could not be broadcast together with shapes (144,128) (120,)
