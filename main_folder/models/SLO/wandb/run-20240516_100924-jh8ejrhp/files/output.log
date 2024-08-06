@@ -1,0 +1,8 @@
+  0%|          | 0/365 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "C:\Users\Frede\AppData\Local\Temp\ipykernel_16204\2410675997.py", line 25, in trainModel
+    loss_log_regret = [regretParams(reg, config.optmodel, loader_test, wind_test)]
+  File "c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\.venv\lib\site-packages\pyepo\metric\regretParams.py", line 43, in regretParams
+    loss += calRegret(optmodel(wind[ix]), cp[j], c[j].to("cpu").detach().numpy(),
+TypeError: 'str' object is not callable
+4

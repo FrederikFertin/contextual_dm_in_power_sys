@@ -1,0 +1,9 @@
+
+100%|██████████| 365/365 [00:03<00:00, 108.74it/s]
+100%|██████████| 365/365 [00:00<00:00, 587.64it/s]
+100%|██████████| 365/365 [00:02<00:00, 128.68it/s]
+Traceback (most recent call last):
+  File "C:\Users\Frede\AppData\Local\Temp\ipykernel_18316\2310471664.py", line 78, in trainSLOModel
+    if loss_log_val[-1] > loss_log_val[-2]:
+IndexError: list index out of range
+Epoch  1,  Loss: 2752.6165,  Regret: 16.8911%

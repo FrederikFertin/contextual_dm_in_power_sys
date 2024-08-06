@@ -1,0 +1,7 @@
+  0%|          | 0/69 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "C:\Users\Frede\AppData\Local\Temp\ipykernel_16204\3352720819.py", line 22, in trainModel
+    loss_log_regret = [regretParams(reg, config.optmodel, config.test_data, wind_test)]
+  File "c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\.venv\lib\site-packages\pyepo\metric\regretParams.py", line 32, in regretParams
+    x, c, w, z = data
+ValueError: not enough values to unpack (expected 4, got 1)

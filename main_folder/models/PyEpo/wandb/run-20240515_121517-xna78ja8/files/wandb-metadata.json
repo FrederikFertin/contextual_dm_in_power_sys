@@ -1,0 +1,44 @@
+{
+    "os": "Windows-10-10.0.22631-SP0",
+    "python": "3.11.9",
+    "heartbeatAt": "2024-05-15T10:15:18.656450",
+    "startedAt": "2024-05-15T10:15:17.537152",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/FrederikFertin/contextual_dm_in_power_sys.git",
+        "commit": "607663ee01413be80df06840b641349942630eaa"
+    },
+    "email": "ande706h@gmail.com",
+    "root": "C:/Users/ande7/Documents/Semester 3/Special/Course Material/contextual_dm_in_power_sys",
+    "host": "WIN-BKJ40QB465Q",
+    "username": "ande7",
+    "executable": "c:\\Users\\ande7\\anaconda3\\envs\\Pyepo\\python.exe",
+    "cpu_count": 12,
+    "cpu_count_logical": 16,
+    "cpu_freq": {
+        "current": 2100.0,
+        "min": 0.0,
+        "max": 2100.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2100.0,
+            "min": 0.0,
+            "max": 2100.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 456.22265243530273,
+            "used": 198.95598220825195
+        }
+    },
+    "memory": {
+        "total": 15.635570526123047
+    }
+}

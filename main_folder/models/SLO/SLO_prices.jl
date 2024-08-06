@@ -144,21 +144,29 @@ end
 ###################### ERSAA ############################
 
 # Training hours with wind divided into categories based on wind strength
-x_train_prices= x_train[:,6] #Forecasted prices siemens 
+x_train_prices = y_pred_train #Forecasted prices siemens
+train_errors = lambda_F[1:8760] - y_pred_train
+
+highest_error = quantile(vec(train_errors), 0.99)
+lowest_error = quantile(vec(train_errors), 0.01)
+
+x_train_prices = x_train_prices[train_errors .> lowest_error .&& train_errors .< highest_error]
+train_errors = train_errors[train_errors .> lowest_error .&& train_errors .< highest_error]
+
 y_train_high = x_train_prices .> q75
 y_train_low = x_train_prices .<= q25
 y_train_mid = .!(y_train_high .| y_train_low)
 
-train_errors = lambda_F[1:8760] - lambda_F_fc[1:8760]
-
-error_high = train_errors[reshape(y_train_high, 8760)]
-error_mid = train_errors[reshape(y_train_mid, 8760)]
-error_low = train_errors[reshape(y_train_low, 8760)]
+error_high = train_errors[reshape(y_train_high, length(train_errors))]
+error_mid = train_errors[reshape(y_train_mid, length(train_errors))]
+error_low = train_errors[reshape(y_train_low, length(train_errors))]
 
 error_dist = truncated(Normal(mean(train_errors), std(train_errors)), findmin(train_errors)[1], findmax(train_errors)[1])
 error_high_dist = truncated(Normal(mean(error_high), std(error_high)), findmin(error_high)[1], findmax(error_high)[1])
 error_mid_dist = truncated(Normal(mean(error_mid), std(error_mid)), findmin(error_mid)[1], findmax(error_mid)[1])
 error_low_dist = truncated(Normal(mean(error_low), std(error_low)), findmin(error_low)[1], findmax(error_low)[1])
+
+# remove outliers of train_errors
 
 # All wind production and their prediction errors are normalized by the nominal wind capacity at this point
 up_test_days = reshape(lambda_UP[8761:8760+test_points], 24, :)'
@@ -176,14 +184,13 @@ for scenarios in [1 2 3 4 5 10 25 50 100 200 365 500]
         if scenarios == 1
             method = "point"
         end
-
         for i = 1:n
             Random.seed!(i*2)
             println("Day: $i")
 
             # Extract data for day i
             local test_day_wind = x_test_days[i,5:6:24*n_features]   # Point prediction of wind production
-            local test_day_lambda = x_test_days[i,6:6:24*n_features] # Point prediction of forward price
+            local test_day_lambda = y_pred[1+(i-1)*24:24+(i-1)*24] # Point prediction of forward price
             local test_day_up = up_test_days[i,:]
             local test_day_dw = dw_test_days[i,:]
 

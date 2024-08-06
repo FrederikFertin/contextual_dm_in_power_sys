@@ -1,0 +1,11 @@
+  0%|          | 0/365 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "C:\Users\Frede\AppData\Local\Temp\ipykernel_16204\1525155781.py", line 22, in trainModel
+    loss_log_regret = [regretParams(reg, optmodel, loader_test, wind_test)]
+  File "c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\.venv\lib\site-packages\pyepo\metric\regretParams.py", line 43, in regretParams
+    loss += calRegret(optmodel(wind[ix]), cp[j], c[j].to("cpu").detach().numpy(),
+  File "c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\.venv\lib\site-packages\pyepo\metric\regretParams.py", line 69, in calRegret
+    optmodel.setObj(pred_cost)
+  File "c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\.venv\lib\site-packages\pyepo\model\grb\grbmodel.py", line 54, in setObj
+    raise ValueError("Size of cost vector cannot match vars.")
+ValueError: Size of cost vector cannot match vars.

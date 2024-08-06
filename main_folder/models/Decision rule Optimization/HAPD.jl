@@ -9,7 +9,7 @@ include(joinpath(pwd(), "data_export.jl"))
 top_domain = 53.32 # 90% quantile
 
 
-function get_initial_plan(training_period_length, bidding_start)
+function get_initial_plan(pd, training_period_length, bidding_start)
     # period length is the amount of timesteps used for training
     # bidding_start is the timestep for the first bid, it is expected that 24 bids are needed
 
@@ -32,11 +32,16 @@ function get_initial_plan(training_period_length, bidding_start)
     #Definition of variables
     @variable(initial_plan, 0 <= E_DW[t in periods])
     @variable(initial_plan, 0 <= E_UP[t in periods])
-    @variable(initial_plan, qF[1:(n_features+1), 1:24, 1:3])
-    @variable(initial_plan, qH[1:(n_features+1), 1:24, 1:3])
+    if pd == true
+        @variable(initial_plan, qF[1:(n_features+1), 1:24, 1:3])
+        @variable(initial_plan, qH[1:(n_features+1), 1:24, 1:3])
+    else
+        @variable(initial_plan, qF[1:(n_features+1), 1:24])
+        @variable(initial_plan, qH[1:(n_features+1), 1:24])
 
     @variable(initial_plan, 0 <= hydrogen[t in periods])
     @variable(initial_plan, forward_bid[t in periods])
+    @variable(initial_plan, -max_elec_capacity <= EH_extra[t in periods] <= max_elec_capacity)
 
     #Maximize profit
     @objective(initial_plan, Max,
@@ -45,6 +50,7 @@ function get_initial_plan(training_period_length, bidding_start)
             + lambda_H * hydrogen[t]
             + lambda_DW[t+offset] * E_DW[t]
             - lambda_UP[t+offset] * E_UP[t]
+            + lambda_H * EH_extra[t]
             for t in periods
         ) 
     )
@@ -54,9 +60,14 @@ function get_initial_plan(training_period_length, bidding_start)
     @constraint(initial_plan, wind_capacity_up[t in periods], forward_bid[t] <= max_wind_capacity)
     @constraint(initial_plan, wind_capacity_dw[t in periods], forward_bid[t] >= -max_elec_capacity)
     @constraint(initial_plan, elec_capacity[t in periods], hydrogen[t] <= max_elec_capacity)
+    # Cannot produce more than max capacity:
+    @constraint(initial_plan, elec_capacity_2[t in periods], EH_extra[t] + hydrogen[t] <= max_elec_capacity)
+    # Cannot produce less than 0:
+    @constraint(initial_plan, elec_min_capacity_2[t in periods], EH_extra[t] + hydrogen[t] >= 0)
 
     # Power surplus == POSITIVE, deficit == NEGATIVE
-    @constraint(initial_plan, settlement[t in periods], E_real[t+offset] - forward_bid[t] - hydrogen[t] == E_DW[t] - E_UP[t])
+    @constraint(initial_plan, settlement[t in periods], E_real[t+offset] - forward_bid[t] - hydrogen[t]
+                    == E_DW[t] - E_UP[t] + EH_extra[t])
 
     
 
@@ -67,22 +78,43 @@ function get_initial_plan(training_period_length, bidding_start)
             if (index == 0)
                 index = 24
             end
-            if lambda_F[t+offset] < lambda_H
-                @constraint(initial_plan, forward_bid[t] == sum(qF[i, index, 1] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index, 1])
-                @constraint(initial_plan, hydrogen[t] == sum(qH[i, index, 1] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index, 1])
-            elseif lambda_F[t+offset] < top_domain
-                @constraint(initial_plan, forward_bid[t] == sum(qF[i, index, 2] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index, 2])
-                @constraint(initial_plan, hydrogen[t] == sum(qH[i, index, 2] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index, 2])
+            if index == 1
+                # Must not reduce below min production
+                @constraint(initial_plan, EH_extra[t] >=
+                            - (sum(hydrogen[tt] for tt=t:t+23) - min_production))
             else
-                @constraint(initial_plan, forward_bid[t] == sum(qF[i, index, 3] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index, 3])
-                @constraint(initial_plan, hydrogen[t] == sum(qH[i, index, 3] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index, 3])
+                # Must not reduce below min production - can do if we have produced more than min production earlier
+                @constraint(initial_plan, EH_extra[t] >=
+                - (sum(hydrogen[tt] + EH_extra[tt] for tt=t-(index-1):t-1) +
+                sum(hydrogen[tt] for tt=t:t+(24-index)) - min_production) )
             end
+            if lambda_H < lambda_DW[t+offset]
+                @constraint(initial_plan, EH_extra[t] <= 0)
+            end
+            
+            if pd == true
+                if lambda_F[t+offset] < lambda_H
+                    @constraint(initial_plan, forward_bid[t] == sum(qF[i, index, 1] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index, 1])
+                    @constraint(initial_plan, hydrogen[t] == sum(qH[i, index, 1] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index, 1])
+                elseif lambda_F[t+offset] < top_domain
+                    @constraint(initial_plan, forward_bid[t] == sum(qF[i, index, 2] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index, 2])
+                    @constraint(initial_plan, hydrogen[t] == sum(qH[i, index, 2] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index, 2])
+                else
+                    @constraint(initial_plan, forward_bid[t] == sum(qF[i, index, 3] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index, 3])
+                    @constraint(initial_plan, hydrogen[t] == sum(qH[i, index, 3] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index, 3])
+                end
+            else
+                @constraint(initial_plan, forward_bid[t] == sum(qF[i, index] * x[t+offset, i] for i in 1:n_features) + qF[n_features+1, index])
+                @constraint(initial_plan, hydrogen[t] == sum(qH[i, index] * x[t+offset, i] for i in 1:n_features) + qH[n_features+1, index])
         end
     end
 
     optimize!(initial_plan)
 
-    return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], value.(E_DW), value.(E_UP)
+    if pd == true
+        return [[value.(qF[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], [[value.(qH[i, :, d]) for i in 1:(n_features+1)] for d in 1:3], value.(E_DW), value.(E_UP)
+    else
+        return [value.(qF[i, :]) for i in 1:(n_features+1)], [value.(qH[i, :]) for i in 1:(n_features+1)], value.(E_DW), value.(E_UP)
 end
 
 print("\n\n")
@@ -98,14 +130,20 @@ validation_period = 0
 test_period = 0
 bidding_start = length(lambda_F) - validation_period - test_period
 
-x[:,"forward_RE"] = lambda_F
+x[:,"forward_RE"] = lambda_F_fc
+
+pd = false
 
 qFs, qHs, e_dw_lin, e_up_lin = get_initial_plan(training_period, bidding_start)
 
-data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
-names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
+if pd == true
+    data = vcat([qFs[d][i] for i in 1:(n_features+1) for d in 1:3], [qHs[d][i] for i in 1:(n_features+1) for d in 1:3])
+    names = vcat(["qF$(d)_$i" for i in 1:(n_features+1) for d in 1:3], ["qH$(d)_$i" for i in 1:(n_features+1) for d in 1:3])
+else
+    data = vcat([qFs[i] for i in 1:(n_features+1)], [qHs[i] for i in 1:(n_features+1)])
+    names = vcat(["qF$i" for i in 1:(n_features+1)], ["qH$i" for i in 1:(n_features+1)])
 
-filename = "2020/pricedomains/hourly_af_PRICEDOMAIN_full_year_lin"
+filename = "2020/pricedomains/hourly_full_year_lin"
 easy_export(data, names, filename,)
 
 

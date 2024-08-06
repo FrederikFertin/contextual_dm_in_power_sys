@@ -1,0 +1,42 @@
+2024-05-15 14:20:13,677 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Current SDK version is 0.17.0
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Configure stats pid to 24640
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Loading settings from C:\Users\Frede\.config\wandb\settings
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Loading settings from c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\models\PyEpo\wandb\settings
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Loading settings from environment variables: {'entity': 'Pyepo_special', 'project': 'Sweep Pyepo', 'root_dir': 'c:\\Users\\Frede\\Documents\\DTU\\2024\\Special Course\\git\\main_folder\\models\\PyEpo', 'run_id': '69alpzb1', 'sweep_param_path': 'c:\\Users\\Frede\\Documents\\DTU\\2024\\Special Course\\git\\main_folder\\models\\PyEpo\\wandb\\sweep-w67n9lz0\\config-69alpzb1.yaml', 'sweep_id': 'w67n9lz0'}
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Applying setup settings: {'_disable_service': False}
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Inferring run settings from compute environment: {'program': '<python with no main file>'}
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_setup.py:_flush():76] Applying login settings: {}
+2024-05-15 14:20:13,678 INFO    MainThread:24640 [wandb_init.py:_log_setup():520] Logging user logs to c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\models\PyEpo\wandb\run-20240515_142013-69alpzb1\logs\debug.log
+2024-05-15 14:20:13,679 INFO    MainThread:24640 [wandb_init.py:_log_setup():521] Logging internal logs to c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\models\PyEpo\wandb\run-20240515_142013-69alpzb1\logs\debug-internal.log
+2024-05-15 14:20:13,679 INFO    MainThread:24640 [wandb_init.py:_jupyter_setup():466] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x000001ADA96CC4C0>
+2024-05-15 14:20:13,679 INFO    MainThread:24640 [wandb_init.py:init():560] calling init triggers
+2024-05-15 14:20:13,679 INFO    MainThread:24640 [wandb_init.py:init():567] wandb.init called with sweep_config: {'dropout': 0.9, 'gamma': 0.95, 'lr': 0.0001, 'method_name': 'spo+', 'neurons': 32, 'num_epochs': 20}
+config: {'lr': 0.001, 'gamma': 0.95, 'num_epochs': 30, 'neurons': 64, 'dropout': 0.7, 'method_name': 'spo+'}
+2024-05-15 14:20:13,679 INFO    MainThread:24640 [wandb_init.py:init():610] starting backend
+2024-05-15 14:20:13,679 INFO    MainThread:24640 [wandb_init.py:init():614] setting up manager
+2024-05-15 14:20:13,692 INFO    MainThread:24640 [backend.py:_multiprocessing_setup():105] multiprocessing start_methods=spawn, using: spawn
+2024-05-15 14:20:13,692 INFO    MainThread:24640 [wandb_init.py:init():622] backend started and connected
+2024-05-15 14:20:13,713 INFO    MainThread:24640 [wandb_run.py:_config_callback():1376] config_cb None None {'dropout': 0.9, 'gamma': 0.95, 'lr': 0.0001, 'method_name': 'spo+', 'neurons': 32, 'num_epochs': 20}
+2024-05-15 14:20:13,715 INFO    MainThread:24640 [wandb_run.py:_label_probe_notebook():1328] probe notebook
+2024-05-15 14:20:13,715 INFO    MainThread:24640 [wandb_run.py:_label_probe_notebook():1338] Unable to probe notebook: 'NoneType' object has no attribute 'get'
+2024-05-15 14:20:13,715 INFO    MainThread:24640 [wandb_init.py:init():711] updated telemetry
+2024-05-15 14:20:13,769 INFO    MainThread:24640 [wandb_init.py:init():744] communicating run to backend with 90.0 second timeout
+2024-05-15 14:20:14,288 INFO    MainThread:24640 [wandb_run.py:_on_init():2396] communicating current version
+2024-05-15 14:20:14,340 INFO    MainThread:24640 [wandb_run.py:_on_init():2405] got version response 
+2024-05-15 14:20:14,340 INFO    MainThread:24640 [wandb_init.py:init():795] starting run threads in backend
+2024-05-15 14:20:14,622 INFO    MainThread:24640 [wandb_run.py:_console_start():2374] atexit reg
+2024-05-15 14:20:14,622 INFO    MainThread:24640 [wandb_run.py:_redirect():2229] redirect: wrap_raw
+2024-05-15 14:20:14,622 INFO    MainThread:24640 [wandb_run.py:_redirect():2294] Wrapping output streams.
+2024-05-15 14:20:14,622 INFO    MainThread:24640 [wandb_run.py:_redirect():2319] Redirects installed.
+2024-05-15 14:20:14,622 INFO    MainThread:24640 [wandb_init.py:init():838] run started, returning control to user process
+2024-05-15 14:20:17,654 INFO    MainThread:24640 [wandb_watch.py:watch():51] Watching
+2024-05-15 14:23:30,702 INFO    MainThread:24640 [wandb_run.py:_finish():2103] finishing run Pyepo_special/Sweep Pyepo/69alpzb1
+2024-05-15 14:23:30,702 ERROR   MainThread:24640 [jupyter.py:save_history():437] Run pip install nbformat to save notebook history
+2024-05-15 14:23:30,702 INFO    MainThread:24640 [jupyter.py:save_ipynb():373] not saving jupyter notebook
+2024-05-15 14:23:30,702 INFO    MainThread:24640 [wandb_init.py:_jupyter_teardown():448] cleaning up jupyter logic
+2024-05-15 14:23:30,702 INFO    MainThread:24640 [wandb_run.py:_atexit_cleanup():2343] got exitcode: 0
+2024-05-15 14:23:30,702 INFO    MainThread:24640 [wandb_run.py:_restore():2326] restore
+2024-05-15 14:23:30,702 INFO    MainThread:24640 [wandb_run.py:_restore():2332] restore done
+2024-05-15 14:23:37,350 INFO    MainThread:24640 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-15 14:23:37,350 INFO    MainThread:24640 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-15 14:23:37,364 INFO    MainThread:24640 [wandb_run.py:_footer_sync_info():3953] logging synced files

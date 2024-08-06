@@ -1,0 +1,21 @@
+[[ 9.85294118  9.85294118  9.50980392 ... 10.          9.3627451
+   9.90196078]
+ [ 9.85294118  9.50980392  8.52941176 ...  9.3627451   9.90196078
+   9.11764706]
+ [ 9.50980392  8.52941176  7.69607843 ...  9.90196078  9.11764706
+   9.75490196]
+ ...
+ [ 6.81372549  6.32352941  5.19607843 ...  2.45098039  2.99019608
+   3.08823529]
+ [ 6.32352941  5.19607843  3.28431373 ...  2.99019608  3.08823529
+   4.50980392]
+ [ 5.19607843  3.28431373  2.64705882 ...  3.08823529  4.50980392
+   5.78431373]]
+__main__.hydrogenPlanning_2
+  0%|          | 0/365 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "C:\Users\Frede\AppData\Local\Temp\ipykernel_16204\1559991041.py", line 24, in trainModel
+    loss_log_regret = [regretParams(reg, config.optmodel, loader_test, wind_test)]
+  File "c:\Users\Frede\Documents\DTU\2024\Special Course\git\main_folder\.venv\lib\site-packages\pyepo\metric\regretParams.py", line 43, in regretParams
+    loss += calRegret(optmodel(wind[ix]), cp[j], c[j].to("cpu").detach().numpy(),
+TypeError: 'str' object is not callable

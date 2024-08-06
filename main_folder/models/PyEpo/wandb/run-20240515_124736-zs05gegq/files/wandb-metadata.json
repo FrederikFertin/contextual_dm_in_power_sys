@@ -1,0 +1,44 @@
+{
+    "os": "Windows-10-10.0.22631-SP0",
+    "python": "3.10.5",
+    "heartbeatAt": "2024-05-15T10:47:37.375581",
+    "startedAt": "2024-05-15T10:47:36.769102",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/FrederikFertin/contextual_dm_in_power_sys.git",
+        "commit": "0f62229608f85c94ec121e8bc4a79152b5781066"
+    },
+    "email": "s203679@student.dtu.dk",
+    "root": "C:/Users/Frede/Documents/DTU/2024/Special Course/git",
+    "host": "LAPTOP-HN7IUD6G",
+    "username": "Frede",
+    "executable": "c:\\Users\\Frede\\Documents\\DTU\\2024\\Special Course\\git\\main_folder\\.venv\\Scripts\\python.exe",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 991.0,
+        "min": 0.0,
+        "max": 1190.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 991.0,
+            "min": 0.0,
+            "max": 1190.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 237.22753524780273,
+            "used": 232.9992446899414
+        }
+    },
+    "memory": {
+        "total": 7.781242370605469
+    }
+}

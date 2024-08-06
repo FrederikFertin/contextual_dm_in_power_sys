@@ -308,7 +308,7 @@ function get_ER_SAA_plan_prices(test_scenarios::Matrix{Float64},
     price_UP::Vector{Float64},
     price_DW::Vector{Float64},
     wind_fc::Vector{Float64})
-    #Fc is the real wind 
+    #Fc is the real wind normalized
     # Generate ER-SAA scenarios
     scens = size(test_scenarios, 1)
     scenarios = collect(1:scens) # Number of scenarios/days generated
@@ -334,10 +334,10 @@ function get_ER_SAA_plan_prices(test_scenarios::Matrix{Float64},
     ### 1st Stage variables ###
     @variable(SAA, 0 <= hydrogen_plan[t in periods]) # First stage
     @variable(SAA, forward_bid[t in periods]) # First stage 
-
+    
     ### 2nd Stage variables ###
-    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 2*max_wind_capacity)
-    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 2*max_wind_capacity)
+    @variable(SAA, 0 <= E_DW[t in periods, s in scenarios] <= 10*max_wind_capacity)
+    @variable(SAA, 0 <= E_UP[t in periods, s in scenarios] <= 10*max_wind_capacity)
     @variable(SAA, -max_elec_capacity <= EH_extra[t in periods, s in scenarios] <= max_elec_capacity)
     
     #---------------- Objective function -----------------#
@@ -371,7 +371,7 @@ function get_ER_SAA_plan_prices(test_scenarios::Matrix{Float64},
 
             # Power surplus == POSITIVE, deficit == NEGATIVE
             @constraint(SAA,
-                    wind_fc[t] - forward_bid[t] - hydrogen_plan[t]
+                    wind_fc[t]*max_wind_capacity - forward_bid[t] - hydrogen_plan[t]
                         ==
                         E_DW[t,s] + EH_extra[t,s] - E_UP[t,s])
 
